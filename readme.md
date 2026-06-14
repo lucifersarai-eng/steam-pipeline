@@ -103,9 +103,9 @@ I work professionally with data pipelines in Databricks — this project replica
 ## Status
 
 - [x] Architecture defined
-- [ ] Steam Store ingestion
+- [X] Steam Store ingestion
 - [ ] Steam Spy ingestion  
-- [ ] Silver layer transformations
+- [X] Silver layer transformations
 - [ ] Gold KPI models
 - [ ] Dashboard
 
