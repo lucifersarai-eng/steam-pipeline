@@ -1,0 +1,4 @@
+appid,name,type,is_free,developer,publisher,genres,on_windows,on_mac,on_linux,release_date,release_year,metacritic_score,price_usd,price_original_usd,discount_percent,required_age,short_description
+730,Counter-Strike 2,game,1,Valve,Valve,Action | Free To Play,1,0,1,"Aug 21, 2012",2012,,,,,0,"For over two decades, Counter-Strike has offered an elite competitive experience."
+1172470,Apex Legends™,game,1,Respawn,Electronic Arts,Action | Adventure | Free To Play,1,0,0,"Nov 4, 2020",2020,88,,,,0,"Apex Legends is the award-winning, free-to-play Hero Shooter from Respawn Entertainment."
+1623730,Palworld,game,0,Pocketpair,Pocketpair,Action | Adventure | Indie | RPG | Early Access,1,0,0,"Jan 18, 2024",2024,,29.99,29.99,0,0,"Fight, farm, build and work alongside mysterious creatures called Pals."
