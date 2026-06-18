@@ -13,6 +13,7 @@ Run:
 
 from ingestion.steam_spy import fetch_top_games, save_raw
 from ingestion.steam_store import fetch_batch
+from ingestion.steam_reviews import fetch_batch as fetch_reviews_batch
 from utils.helpers import logger
 
 
@@ -35,6 +36,11 @@ def run():
     logger.info("Step 3: Fetching Steam Store metadata...")
     metadata = fetch_batch(appids)
     save_raw(metadata, name="steam_store_metadata")
+
+    # Step 4: Fetch top reviews for each game
+    logger.info("Step 4: Fetching top reviews...")
+    reviews = fetch_reviews_batch(appids)
+    save_raw(reviews, name="steam_reviews")
 
     logger.info(f"=== Pipeline complete. {len(metadata)} games ingested. ===")
 
