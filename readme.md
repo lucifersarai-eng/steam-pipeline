@@ -1,33 +1,33 @@
 # steam-pipeline
 
-End-to-end gaming data pipeline built on the Steam Web API.
+End-to-end gaming data pipeline built on public Steam APIs.
 
-Ingests game and player data from Steam, transforms it through a structured data model, and delivers a dashboard tracking player behavior, game performance, and revenue proxies — the same type of pipeline I build professionally in production.
+Ingests game, player, and review data from Steam, transforms it through a structured medallion architecture, and delivers a dashboard with KPIs and game similarity analysis based on review co-mentions.
 
 ---
 
 ## Architecture
 
 ```
-Steam Web API
+Steam APIs (Spy / Store / Reviews)
      │
      ▼
-[ingestion.py]        ← HTTP requests, pagination, error handling
+[ingestion/]          ← HTTP requests, retry with backoff, rate limiting
      │
      ▼
 [raw/]                ← raw JSON responses, timestamped
      │
      ▼
-[transform.py]        ← cleaning, typing, deduplication
+[transform/]           ← cleaning, typing, flattening
      │
      ▼
-[silver/]             ← structured tables (games, players, reviews)
+[silver/]              ← structured CSVs (games, review_summaries, reviews)
      │
      ▼
-[gold/]               ← aggregated models (KPIs, trends, rankings)
+[gold/]                 ← aggregated KPIs and co-mention analysis
      │
      ▼
-[dashboard]           ← Power BI / Looker Studio
+[dashboard.ipynb]       ← Jupyter Notebook with charts, rendered on GitHub
 ```
 
 ---
@@ -36,18 +36,18 @@ Steam Web API
 
 | Source | Endpoint | Data |
 |---|---|---|
-| Steam Store API | `/appdetails` | Game metadata, price, genres |
-| Steam Spy API | `/app` | Player counts, revenue estimates, ratings |
-| Steam Reviews API | `/reviews` | User reviews, sentiment, volume |
+| Steam Spy API | `/api.php` | Top games, owners, players, price |
+| Steam Store API | `/api/appdetails` | Game metadata, genres, platforms, Metacritic score |
+| Steam Reviews API | `/appreviews/{appid}` | Review summary, individual review texts, helpful votes |
 
 ---
 
 ## Stack
 
-- **Python** — ingestion, transformation logic
-- **SQL** — data modelling (Silver/Gold layers)
-- **Pandas / DuckDB** — local transformation and querying
-- **Power BI / Looker Studio** — dashboard delivery
+- **Python** — ingestion, transformation, and analysis logic (standard library + `requests`)
+- **pandas** — loading and exploring CSVs in the dashboard
+- **matplotlib** — static charts that render reliably inside GitHub
+- **Jupyter Notebook** — dashboard delivery, viewable directly on GitHub
 
 ---
 
@@ -56,57 +56,64 @@ Steam Web API
 ```
 steam-pipeline/
 ├── ingestion/
-│   ├── steam_store.py       # game metadata ingestion
-│   ├── steam_spy.py         # player and revenue data
-│   └── steam_reviews.py     # reviews ingestion
+│   ├── steam_spy.py         # top games, players, owners
+│   ├── steam_store.py       # game metadata
+│   └── steam_reviews.py     # review summaries and top reviews
 ├── transform/
-│   ├── silver_games.sql     # clean game dimension
-│   ├── silver_players.sql   # clean player metrics
-│   └── silver_reviews.sql   # clean reviews
+│   ├── silver_games.py      # clean game dimension
+│   └── silver_reviews.py    # clean review summaries and texts
 ├── gold/
-│   ├── gold_kpis.sql        # top games by player count, reviews, price
-│   └── gold_trends.sql      # weekly player trend by genre
+│   ├── gold_kpis.py         # top games by score/volume, genre stats
+│   └── gold_comentions.py   # game co-mentions extracted from reviews
 ├── utils/
 │   └── helpers.py           # rate limiting, retry logic, logging
-├── notebooks/
-│   └── exploration.ipynb    # EDA and model validation
+├── examples/
+│   ├── steamspy_sample.json # sample raw data
+│   └── games_sample.csv     # sample silver data
+├── dashboard.ipynb           # final dashboard with charts
+├── main.py                   # orchestrates the full ingestion pipeline
 ├── requirements.txt
-└── README.md
+└── .gitignore
 ```
 
 ---
 
 ## Key Design Decisions
 
-- **Medallion architecture (Raw → Silver → Gold)** — same pattern used in production; separates concerns between ingestion fidelity and analytical readiness
-- **Rate limiting & retry logic** — Steam API has strict rate limits; ingestion layer handles backoff gracefully
-- **Idempotent loads** — re-running the pipeline doesn't duplicate data
-- **Schema validation** — type checks and null assertions at the Silver layer catch upstream API changes early
+- **Medallion architecture (Raw → Silver → Gold)** — same pattern used in production data platforms; separates ingestion fidelity from analytical readiness
+- **Rate limiting & retry logic** — Steam APIs are rate-limited; the ingestion layer handles backoff gracefully
+- **Timestamped raw data** — every ingestion run is saved with a timestamp, creating an audit trail
+- **Co-mentions stay in Gold, not Silver** — Silver preserves the original review texts unmodified; the extraction of game mentions is an analytical step that belongs in Gold, so it can be recomputed without re-ingesting data
 
 ---
 
-## Dashboard KPIs
+## Dashboard
 
-- Top 50 games by concurrent players (7-day trend)
-- Revenue proxy by genre and publisher
-- Review sentiment score vs player retention
-- Price vs rating distribution
+`dashboard.ipynb` renders directly on GitHub and includes:
+
+- Overview of the 100-game dataset
+- Top 20 games by % positive reviews (minimum 1,000 reviews)
+- Top 20 games by total review volume
+- Average positive ratio by genre
+- Top 15 game pairs co-mentioned in reviews (similarity signal)
 
 ---
 
 ## Why This Project
 
-I work professionally with data pipelines in Databricks — this project replicates that work using public gaming data. The Steam API has the same characteristics as real production sources: rate limits, pagination, schema inconsistencies, and high-volume payloads. It's a natural bridge between my current stack and the gaming data engineering domain.
+This project replicates a production-style data pipeline using public gaming data from Steam. The APIs have the same characteristics as real production sources: rate limits, pagination, inconsistent schemas, and nested payloads. It's a hands-on way to practice data engineering fundamentals — ingestion, transformation, layered data modeling, and analysis — end to end.
 
 ---
 
 ## Status
 
 - [x] Architecture defined
-- [X] Steam Store ingestion
-- [ ] Steam Spy ingestion  
-- [X] Silver layer transformations
-- [ ] Gold KPI models
-- [ ] Dashboard
+- [x] Steam Spy ingestion
+- [x] Steam Store ingestion
+- [x] Steam Reviews ingestion
+- [x] Silver layer transformations
+- [x] Gold KPI models
+- [x] Gold co-mention analysis
+- [x] Dashboard
 
-*In progress — contributions welcome.*
+*Pipeline complete — built end to end from API ingestion through dashboard delivery.*
